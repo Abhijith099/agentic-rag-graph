@@ -1,0 +1,14 @@
+# Environment configuration files
+.env
+.env.local
+.env.*
+!.env.example
+
+# Python virtual environment
+venv/
+__pycache__/
+*.pyc
+
+# OS generated files
+Thumbs.db
+.DS_Store
