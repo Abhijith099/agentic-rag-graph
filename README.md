@@ -1,52 +1,75 @@
-﻿# 🧠 Agentic RAG with Knowledge Graph
+﻿# Agentic RAG with Knowledge Graph
 
-> An enterprise-grade, dual-layer Agentic Retrieval-Augmented Generation (RAG) system combining **PostgreSQL (pgvector)** semantic search with a **Neo4j Knowledge Graph** orchestrated by **Pydantic AI**.
+An enterprise-grade, dual-layer Agentic Retrieval-Augmented Generation (RAG) system combining PostgreSQL (pgvector) semantic search with a Neo4j Knowledge Graph orchestrated by Pydantic AI.
 
 ---
 
-## 📌 Architecture Overview
+## Visual Demonstrations
 
-Traditional RAG systems rely solely on vector search, which retrieves document passages based on semantic similarity but struggles with complex, multi-hop entity relationships (e.g., *Which company funded by former OpenAI researchers competes with Google?*).
+### 1. Dual Database Health Verification (Swagger API)
+FastAPI automated documentation interface confirming operational connectivity to both the Neon PostgreSQL vector database and the Neo4j Aura knowledge graph.
+
+![Swagger API Health Check](docs/images/api_health_swagger.png)
+
+---
+
+### 2. Multi-Hop Knowledge Graph Traversal (CLI)
+Query demonstrating autonomous relationship extraction and multi-entity mapping across Microsoft, OpenAI, and leadership governance.
+
+![Knowledge Graph Relationship Query](docs/images/cli_graph_query.png)
+
+---
+
+### 3. High-Fidelity Document Retrieval & Synthesis (CLI)
+Query demonstrating semantic vector retrieval from PostgreSQL, extracting corporate investments, cloud agreements, and silicon hardware commitments with citations.
+
+![Vector Retrieval Query](docs/images/cli_vector_query.png)
+
+---
+
+## Architecture Overview
+
+Traditional RAG systems rely solely on vector search, which retrieves document passages based on semantic similarity but struggles with complex, multi-hop entity relationships.
 
 This project integrates two complementary retrieval engines into an autonomous agent loop:
 
 `
-                            ┌────────────────────────┐
-                            │      User Request      │
-                            └───────────┬────────────┘
-                                        │
-                                        ▼
-                            ┌────────────────────────┐
-                            │   Pydantic AI Agent    │
-                            │ (Groq Llama 3.3 / GPT) │
-                            └───────────┬────────────┘
-                                        │
-             ┌──────────────────────────┼──────────────────────────┐
-             ▼                          ▼                          ▼
-   ┌───────────────────┐      ┌───────────────────┐      ┌───────────────────┐
-   │   vector_search   │      │   graph_search    │      │   hybrid_search   │
-   ├───────────────────┤      ├───────────────────┤      ├───────────────────┤
-   │ PostgreSQL + HNSW │      │ Neo4j + Graphiti  │      │ Vector + Keyword  │
-   │ Technical docs,   │      │ Entities, nodes,  │      │ Exact model codes │
-   │ narrative context │      │ multi-hop links   │      │ & product names   │
-   └───────────────────┘      └───────────────────┘      └───────────────────┘
+                            +------------------------+
+                            |      User Request      |
+                            +-----------+------------+
+                                        |
+                                        v
+                            +------------------------+
+                            |   Pydantic AI Agent    |
+                            | (Groq Llama 3.3 / GPT) |
+                            +-----------+------------+
+                                        |
+             +--------------------------+--------------------------+
+             v                          v                          v
+   +-------------------+      +-------------------+      +-------------------+
+   |   vector_search   |      |   graph_search    |      |   hybrid_search   |
+   +-------------------+      +-------------------+      +-------------------+
+   | PostgreSQL + HNSW |      | Neo4j + Graphiti  |      | Vector + Keyword  |
+   | Technical docs,   |      | Entities, nodes,  |      | Exact model codes |
+   | narrative context |      | multi-hop links   |      | & product names   |
+   +-------------------+      +-------------------+      +-------------------+
 `
 
 ---
 
-## ✨ Key Features
+## Core Capabilities
 
 - **Dual-Layer Retrieval**:
-  - **Vector DB (Neon PostgreSQL)**: Stores chunked passages and dense vector embeddings with an HNSW cosine distance index.
-  - **Knowledge Graph (Neo4j Aura)**: Stores entities and relations with temporal memory via **Graphiti**.
-- **Autonomous Tool Selection**: The **Pydantic AI** agent dynamically chooses between ector_search, graph_search, or hybrid_search based on the user's intent.
+  - **Vector Database (Neon PostgreSQL)**: Stores chunked passages and dense vector embeddings with an HNSW cosine distance index.
+  - **Knowledge Graph (Neo4j Aura)**: Stores entities and relations with temporal memory via Graphiti.
+- **Autonomous Tool Selection**: The Pydantic AI agent dynamically chooses between ector_search, graph_search, or hybrid_search based on the user's intent.
 - **Semantic Text Chunking**: Intelligent recursive chunker splitting on paragraph and sentence boundaries with configurable context overlap.
-- **Real-Time Streaming API**: Built on **FastAPI** with **Server-Sent Events (SSE)** for instant token streaming.
-- **Rich Interactive CLI**: Terminal interface with syntax highlighting, live token typing, and tool execution status.
+- **Real-Time Streaming API**: Built on FastAPI with Server-Sent Events (SSE) for token streaming.
+- **Interactive Terminal Interface**: Terminal interface with formatting, real-time typing, and tool execution status.
 
 ---
 
-## 📁 Repository Structure
+## Repository Structure
 
 `
 ├── agent/
@@ -72,14 +95,14 @@ This project integrates two complementary retrieval engines into an autonomous a
 
 ---
 
-## 🚀 Quickstart Guide
+## Quickstart Guide
 
 ### 1. Prerequisites
 - Python 3.10+
-- A free [Neon.tech](https://neon.tech) PostgreSQL instance (with pgvector)
-- A free [Neo4j Aura](https://neo4j.com/cloud/aura/) instance
-- A [Groq](https://console.groq.com) API key (or OpenAI API key)
-- Local [Ollama](https://ollama.ai) (optional, for local embeddings)
+- Neon.tech PostgreSQL instance (with pgvector)
+- Neo4j Aura instance
+- Groq API key (or OpenAI API key)
+- Ollama (optional, for local embeddings)
 
 ### 2. Installation
 Clone the repository and set up a virtual environment:
@@ -119,12 +142,12 @@ python -c import asyncio; from agent.db import init_db; asyncio.run(init_db())
 Process the markdown files into vector embeddings and knowledge graph entities:
 
 `ash
-python -m ingestion.ingest -d big_tech_docs --clean --verbose
+python -m ingestion.ingest -d big_tech_docs --fast --verbose
 `
 
 ---
 
-## 💻 Running the Application
+## Running the Application
 
 ### Step 1: Start the API Server
 In Terminal 1, start the FastAPI streaming server:
@@ -143,19 +166,16 @@ python cli.py
 
 ---
 
-## 🧪 Example Queries & Behavior
+## Query Examples
 
 - **Relationship Query**:
-  > *How is Microsoft connected to OpenAI?*  
-  > ➜ **Tool Used**: graph_search (traverses partnerships, investments, and Azure cloud exclusivity in Neo4j).
+  > *Explain how Microsoft, OpenAI, and Sam Altman are connected, including leadership roles and investments.*  
+  > Tool Used: graph_search (traverses partnerships, investments, and Azure cloud exclusivity in Neo4j).
 - **Technical Narrative Query**:
-  > *Explain Google's TPU architecture and multimodal training.*  
-  > ➜ **Tool Used**: ector_search (retrieves technical descriptions from PostgreSQL).
-- **Exact Keyword / Model Query**:
-  > *What are the specifications of Llama-3.3-70b-versatile?*  
-  > ➜ **Tool Used**: hybrid_search (combines trigram keyword matching with cosine similarity).
+  > *What are the key details of Amazon's investment in Anthropic, and what cloud commitments were made?*  
+  > Tool Used: ector_search (retrieves technical descriptions from PostgreSQL).
 
 ---
 
-## 📄 License
+## License
 This project is licensed under the MIT License.

@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS chunks (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     document_id UUID NOT NULL REFERENCES documents(id) ON DELETE CASCADE, --each chunk belongs to a document and if the documents it deleted the chunks will also be deleted
     content TEXT NOT NULL,
-    embedding vector(1536),-- 1536 is embedding array dimension for OpenAI's text-embedding-3-large model
+    embedding vector(768),-- 1536 is embedding array dimension for OpenAI's text-embedding-3-large model
     chunk_index INTEGER NOT NULL,
     metadata JSONB DEFAULT '{}',
     token_count INTEGER,
@@ -56,7 +56,7 @@ CREATE INDEX IF NOT EXISTS idx_messages_session_id ON messages (session_id, crea
 
 --vector search function
 CREATE OR REPLACE FUNCTION match_chunks(
-    query_embedding vector(1536),
+    query_embedding vector(768),
     match_count INT DEFAULT 10
 )
 RETURNS TABLE (
@@ -93,7 +93,7 @@ $$;
 
 --hybrid search function
 CREATE OR REPLACE FUNCTION hybrid_search(-- this bascially similarities between the vector and serach text and combines them to get a final score
-    query_embedding vector(1536),
+    query_embedding vector(768),
     query_text TEXT,
     match_count INT DEFAULT 10,
     text_weight FLOAT DEFAULT 0.3
