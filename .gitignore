@@ -1,14 +1,50 @@
-# Environment configuration files
+﻿# ==============================
+# Security & Environment Secrets
+# ==============================
 .env
 .env.local
 .env.*
 !.env.example
+*.pem
+*.key
 
-# Python virtual environment
+# ==============================
+# Python & Virtual Environments
+# ==============================
 venv/
+.venv/
+env/
 __pycache__/
-*.pyc
+*.py[cod]
+*.class
+*.so
+.pytest_cache/
+htmlcov/
+.coverage
 
-# OS generated files
-Thumbs.db
+# ==============================
+# Temporary & Scratch Files
+# ==============================
+test_*.py
+test_neo.py
+scratch/
+temp/
+tmp/
+*.log
+
+# ==============================
+# Node / Frontend / Neon junk
+# ==============================
+node_modules/
+.neon/
+neon.ts
+package.json
+package-lock.json
+
+# ==============================
+# IDE & Operating System
+# ==============================
+.vscode/
+.idea/
 .DS_Store
+Thumbs.db
