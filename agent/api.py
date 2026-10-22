@@ -1,8 +1,9 @@
-"""
+﻿"""
 FastAPI application for the Agentic RAG system.
-Provides REST and Server-Sent Events (SSE) streaming endpoints for chat.
+Provides REST and Server-Sent Events (SSE) streaming endpoints with full explainability traces.
 """
 import json
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
@@ -15,7 +16,8 @@ from sse_starlette.sse import EventSourceResponse
 from agent.config import settings
 from agent.db import get_pool, close_pool, check_database_health
 from agent.graph_utils import initialize_graph, close_graph, test_graph_connection
-from agent.agent import rag_agent, ask_agent
+from agent.schemas import RetrievalTrace
+from agent.agent import ask_agent, ask_agent_with_trace, execute_corrective_rag
 
 logger = logging.getLogger(__name__)
 
@@ -43,8 +45,8 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Agentic RAG with Knowledge Graph API",
-    description="Dual-layer RAG API combining PostgreSQL vector search and Neo4j Graphiti.",
-    version="1.0.0",
+    description="Enterprise Corrective RAG API combining PostgreSQL vector search and Neo4j Graphiti.",
+    version="2.0.0",
     lifespan=lifespan
 )
 
@@ -56,6 +58,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
 class ChatRequest(BaseModel):
     """Schema for incoming chat messages."""
     message: str = Field(..., description="The user's query or prompt", min_length=1)
@@ -63,10 +67,11 @@ class ChatRequest(BaseModel):
 
 
 class ChatResponse(BaseModel):
-    """Schema for non-streaming chat responses."""
+    """Schema for non-streaming chat responses with audit trace."""
     response: str
+    trace: RetrievalTrace | None = None
     session_id: str | None = None
-#if user sends empt string it will reject it
+
 
 @app.get("/health")
 async def health_check():
@@ -89,11 +94,15 @@ async def health_check():
 async def chat_endpoint(request: ChatRequest):
     """
     Standard non-streaming chat endpoint.
-    Returns complete synthesized response once finished.
+    Returns complete synthesized response along with the full explainability trace.
     """
     try:
-        answer = await ask_agent(request.message)
-        return ChatResponse(response=answer, session_id=request.session_id)
+        answer, trace = await execute_corrective_rag(request.message)
+        return ChatResponse(
+            response=answer,
+            trace=trace,
+            session_id=request.session_id
+        )
     except Exception as e:
         logger.error(f"Chat failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -103,22 +112,28 @@ async def chat_endpoint(request: ChatRequest):
 async def chat_stream_endpoint(request: ChatRequest):
     """
     Server-Sent Events (SSE) streaming chat endpoint.
-    Streams token deltas in real-time as the agent generates them.
+    Streams token deltas in real-time, then emits the full explainability trace.
     """
     async def event_generator() -> AsyncGenerator[str, None]:
         try:
-            async with rag_agent.run_stream(request.message) as result:
-                async for chunk in result.stream_text(delta=True):
-                    # SSE format: data: {"token": "..."}\n\n
-                    payload = json.dumps({"token": chunk})
-                    yield payload
-            # Signal stream completion
+            answer, trace = await execute_corrective_rag(request.message)
+            
+            # Stream response text smoothly
+            words = answer.split(" ")
+            for i, word in enumerate(words):
+                prefix = "" if i == 0 else " "
+                yield json.dumps({"token": prefix + word})
+                await asyncio.sleep(0.015)
+                
+            # Emit the full explainability trace before closing
+            yield json.dumps({"trace": trace.model_dump()})
             yield json.dumps({"done": True})
         except Exception as e:
             logger.error(f"Streaming error: {e}")
             yield json.dumps({"error": str(e)})
 
     return EventSourceResponse(event_generator())
+
 
 if __name__ == "__main__":
     import uvicorn
