@@ -1,0 +1,29 @@
+# 1. Security & Secrets (CRITICAL: Never bake into image)
+.env
+.env.*
+*.pem
+*.key
+
+# 2. Virtual Environments & Local Dependencies
+venv/
+.venv/
+env/
+node_modules/
+
+# 3. Python Bytecode & Cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+
+# 4. Version Control & IDE
+.git/
+.gitignore
+.vscode/
+.idea/
+
+# 5. Local Artifacts & Temporary Files
+*.log
+docs/images/
