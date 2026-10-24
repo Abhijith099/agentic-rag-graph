@@ -1,0 +1,542 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enterprise Corrective RAG | Knowledge Graph</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0d1117;
+      --bg-surface: #161b22;
+      --bg-surface-elevated: #21262d;
+      --border-color: #30363d;
+      --border-highlight: #484f58;
+      --text-primary: #e6edf3;
+      --text-secondary: #8b949e;
+      --text-muted: #6e7681;
+      --accent-cyan: #38bdf8;
+      --accent-emerald: #34d399;
+      --accent-amber: #fbbf24;
+      --accent-ruby: #f87171;
+      --user-bubble: #1f2937;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Header */
+    header {
+      background-color: var(--bg-surface);
+      border-bottom: 1px solid var(--border-color);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-badge {
+      background: linear-gradient(135deg, #1e293b, #334155);
+      border: 1px solid var(--border-highlight);
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--accent-cyan);
+      letter-spacing: 0.5px;
+    }
+
+    .brand h1 {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      background: var(--bg-surface-elevated);
+      padding: 6px 12px;
+      border-radius: 20px;
+      border: 1px solid var(--border-color);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background-color: var(--accent-emerald);
+      border-radius: 50%;
+      box-shadow: 0 0 8px rgba(52, 211, 153, 0.5);
+    }
+
+    /* Chat Container */
+    #chat-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      max-width: 900px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    /* Welcome Banner */
+    .welcome-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 24px;
+      margin-top: 10px;
+    }
+
+    .welcome-card h2 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text-primary);
+    }
+
+    .welcome-card p {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .suggestions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .suggestion-btn {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .suggestion-btn:hover {
+      border-color: var(--accent-cyan);
+      background: #28303e;
+      color: #fff;
+    }
+
+    /* Messages */
+    .message-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      width: 100%;
+    }
+
+    .message-row.user {
+      align-items: flex-end;
+    }
+
+    .message-bubble {
+      padding: 14px 18px;
+      border-radius: 12px;
+      max-width: 85%;
+      font-size: 14px;
+      line-height: 1.6;
+      word-wrap: break-word;
+    }
+
+    .message-bubble.user {
+      background: var(--user-bubble);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      border-bottom-right-radius: 2px;
+    }
+
+    .message-bubble.assistant {
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      border-bottom-left-radius: 2px;
+      width: 100%;
+      max-width: 100%;
+    }
+
+    .message-bubble pre {
+      background: #0d1117;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 12px;
+      overflow-x: auto;
+      margin: 10px 0;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+    }
+
+    .message-bubble code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      background: #21262d;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    /* Explainability Audit Panel */
+    .audit-card {
+      background: #11151c;
+      border: 1px solid #28303d;
+      border-left: 3px solid var(--accent-cyan);
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin-top: 12px;
+      font-size: 13px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .audit-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--accent-cyan);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .audit-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .audit-label {
+      color: var(--text-secondary);
+    }
+
+    .audit-value {
+      color: var(--text-primary);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+    }
+
+    .badge {
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .badge-high {
+      background: rgba(52, 211, 153, 0.15);
+      color: var(--accent-emerald);
+      border: 1px solid rgba(52, 211, 153, 0.3);
+    }
+
+    .badge-medium {
+      background: rgba(251, 191, 36, 0.15);
+      color: var(--accent-amber);
+      border: 1px solid rgba(251, 191, 36, 0.3);
+    }
+
+    .badge-none {
+      background: rgba(248, 113, 113, 0.15);
+      color: var(--accent-ruby);
+      border: 1px solid rgba(248, 113, 113, 0.3);
+    }
+
+    /* Input Area */
+    footer {
+      background-color: var(--bg-surface);
+      border-top: 1px solid var(--border-color);
+      padding: 16px 24px;
+    }
+
+    .input-wrapper {
+      max-width: 900px;
+      margin: 0 auto;
+      display: flex;
+      gap: 12px;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      padding: 14px 18px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s ease;
+    }
+
+    input[type="text"]:focus {
+      border-color: var(--accent-cyan);
+    }
+
+    button#send-btn {
+      background: var(--accent-cyan);
+      color: #0b1117;
+      border: none;
+      padding: 0 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    button#send-btn:hover {
+      background: #7dd3fc;
+    }
+
+    button#send-btn:disabled {
+      background: var(--border-color);
+      color: var(--text-muted);
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <div class="logo-badge">CRAG 2.0</div>
+      <h1>Enterprise Corrective RAG with Knowledge Graph</h1>
+    </div>
+    <div class="status-badge">
+      <span class="status-dot"></span>
+      Neon pgvector + Neo4j Aura Online
+    </div>
+  </header>
+
+  <main id="chat-container">
+    <div class="welcome-card" id="welcome-box">
+      <h2>Grounded Autonomous RAG System</h2>
+      <p>
+        Queries are evaluated with relevance grading, multi-hop temporal graphs, and self-healing query rewrites. Every answer includes a verifiable audit trace with confidence scoring.
+      </p>
+      <div class="suggestions">
+        <button class="suggestion-btn" onclick="askQuestion('What did Amazon invest in Anthropic and what AI chips are they using?')">
+          Amazon Anthropic Investment & Chips
+        </button>
+        <button class="suggestion-btn" onclick="askQuestion('Who was the lead investor in OpenAI\'s October 2024 funding round?')">
+          OpenAI October 2024 Lead Investor
+        </button>
+        <button class="suggestion-btn" onclick="askQuestion('What is the official currency used by citizens on planet Mars?')">
+          Mars Currency (Hallucination Guardrail)
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="input-wrapper">
+      <input type="text" id="query-input" placeholder="Ask a question about big tech investments, models, or graph entities..." autocomplete="off">
+      <button id="send-btn" onclick="handleSubmit()">Send</button>
+    </div>
+  </footer>
+
+  <script>
+    const chatContainer = document.getElementById('chat-container');
+    const queryInput = document.getElementById('query-input');
+    const sendBtn = document.getElementById('send-btn');
+    const welcomeBox = document.getElementById('welcome-box');
+
+    queryInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleSubmit();
+      }
+    });
+
+    function askQuestion(text) {
+      queryInput.value = text;
+      handleSubmit();
+    }
+
+    async function handleSubmit() {
+      const query = queryInput.value.trim();
+      if (!query) return;
+
+      queryInput.value = '';
+      sendBtn.disabled = true;
+
+      if (welcomeBox) welcomeBox.style.display = 'none';
+
+      // 1. Render User Message
+      appendMessage(query, 'user');
+
+      // 2. Render Assistant Bubble (Empty, ready to stream)
+      const assistantBubble = appendMessage('', 'assistant');
+
+      try {
+        const response = await fetch('/chat/stream', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: query })
+        });
+
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`);
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        let buffer = '';
+        let fullText = '';
+        let lastTrace = null;
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop(); // Keep partial line
+
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (trimmed.startsWith('data:')) {
+              const dataStr = trimmed.slice(5).trim();
+              if (!dataStr) continue;
+
+              try {
+                const data = JSON.parse(dataStr);
+                if (data.token) {
+                  fullText += data.token;
+                  assistantBubble.innerHTML = formatMarkdown(fullText);
+                  chatContainer.scrollTop = chatContainer.scrollHeight;
+                } else if (data.trace) {
+                  lastTrace = data.trace;
+                } else if (data.done) {
+                  if (lastTrace) {
+                    renderAuditCard(assistantBubble, lastTrace);
+                  }
+                } else if (data.error) {
+                  assistantBubble.innerHTML += `<div style="color:var(--accent-ruby); margin-top:8px;">Error: ${data.error}</div>`;
+                }
+              } catch (e) {
+                // Ignore json parse error for heartbeat
+              }
+            }
+          }
+        }
+      } catch (err) {
+        assistantBubble.innerHTML = `<span style="color:var(--accent-ruby)">Failed to connect: ${err.message}</span>`;
+      } finally {
+        sendBtn.disabled = false;
+        queryInput.focus();
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }
+    }
+
+    function appendMessage(text, sender) {
+      const row = document.createElement('div');
+      row.className = `message-row ${sender}`;
+
+      const bubble = document.createElement('div');
+      bubble.className = `message-bubble ${sender}`;
+      bubble.innerHTML = formatMarkdown(text);
+
+      row.appendChild(bubble);
+      chatContainer.appendChild(row);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+      return bubble;
+    }
+
+    function renderAuditCard(container, trace) {
+      const card = document.createElement('div');
+      card.className = 'audit-card';
+
+      const tools = (trace.tools_invoked || []).join(' → ') || 'None';
+      const retrieved = trace.chunks_retrieved_count || 0;
+      const passed = trace.chunks_passed_grading || 0;
+      const rewritten = trace.query_was_rewritten ? 'Yes' : 'No';
+      const citations = (trace.citations && trace.citations.length) ? trace.citations.join(', ') : 'None';
+      const confidence = (trace.confidence_level || 'unknown').toUpperCase();
+      const badgeClass = confidence === 'HIGH' ? 'badge-high' : (confidence === 'MEDIUM' ? 'badge-medium' : 'badge-none');
+
+      let rewriteSection = '';
+      if (trace.query_was_rewritten) {
+        rewriteSection = `
+          <div class="audit-row">
+            <span class="audit-label">Rewritten Query:</span>
+            <span class="audit-value" style="color:var(--accent-amber)">${trace.rewritten_query || 'N/A'}</span>
+          </div>
+        `;
+      }
+
+      card.innerHTML = `
+        <div class="audit-title">
+          <span>Explainability Audit Trace</span>
+          <span class="badge ${badgeClass}">${confidence} Confidence</span>
+        </div>
+        <div class="audit-row">
+          <span class="audit-label">Tools Invoked:</span>
+          <span class="audit-value">${tools}</span>
+        </div>
+        <div class="audit-row">
+          <span class="audit-label">Chunks Evaluated:</span>
+          <span class="audit-value">${retrieved} retrieved | ${passed} passed grading</span>
+        </div>
+        <div class="audit-row">
+          <span class="audit-label">Query Rewritten:</span>
+          <span class="audit-value">${rewritten}</span>
+        </div>
+        ${rewriteSection}
+        <div class="audit-row">
+          <span class="audit-label">Sources / Citations:</span>
+          <span class="audit-value">${citations}</span>
+        </div>
+      `;
+
+      container.appendChild(card);
+    }
+
+    function formatMarkdown(text) {
+      if (!text) return '';
+      // Simple markdown converter for bold, italics, code, lists, and line breaks
+      return text
+        .replace(/\n\n/g, '<br><br>')
+        .replace(/\n/g, '<br>')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        .replace(/`(.*?)`/g, '<code>$1</code>');
+    }
+  </script>
+</body>
+</html>

@@ -1,15 +1,19 @@
 ﻿"""
 FastAPI application for the Agentic RAG system.
 Provides REST and Server-Sent Events (SSE) streaming endpoints with full explainability traces.
+Serves an interactive dark-themed web chat interface.
 """
+import os
 import json
 import asyncio
 import logging
+from pathlib import Path
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 from sse_starlette.sse import EventSourceResponse
 
@@ -20,6 +24,8 @@ from agent.schemas import RetrievalTrace
 from agent.agent import ask_agent, ask_agent_with_trace, execute_corrective_rag
 
 logger = logging.getLogger(__name__)
+
+STATIC_INDEX = Path(__file__).parent / "static" / "index.html"
 
 
 @asynccontextmanager
@@ -71,6 +77,16 @@ class ChatResponse(BaseModel):
     response: str
     trace: RetrievalTrace | None = None
     session_id: str | None = None
+
+
+@app.get("/")
+async def serve_index():
+    """
+    Serves the interactive dark-themed web chat application.
+    """
+    if STATIC_INDEX.exists():
+        return FileResponse(STATIC_INDEX)
+    return {"message": "Agentic RAG API is live. Visit /docs for Swagger UI."}
 
 
 @app.get("/health")
