@@ -419,12 +419,29 @@ if __name__ == "__main__":
 
 # Backwards compatibility alias for agent/tools.py
 class Embedder:
-    "Wrapper around EmbeddingGenerator for agent tools."
+    """Universal Embedder: uses in-container fastembed if available, otherwise falls back to API client."""
     def __init__(self):
-        self._gen = create_embedder()
+        self._fastembed_model = None
+        try:
+            from fastembed import TextEmbedding
+            # nomic-ai/nomic-embed-text-v1.5 produces the exact 768-dim embeddings matching our database
+            self._fastembed_model = TextEmbedding(model_name="nomic-ai/nomic-embed-text-v1.5")
+            logger.info("Using in-container fastembed for 768-dim nomic-embed-text")
+        except Exception as e:
+            logger.warning(f"Fastembed unavailable ({e}), falling back to API client")
+            self._gen = create_embedder()
     
     async def embed_text(self, text: str):
+        if self._fastembed_model:
+            embeddings = list(self._fastembed_model.embed([text]))
+            return embeddings[0].tolist()
         return await self._gen.embed_query(text)
     
     async def embed_chunks(self, chunks, batch_size=50):
+        if self._fastembed_model:
+            texts = [c.content for c in chunks]
+            embeddings = list(self._fastembed_model.embed(texts))
+            for chunk, emb in zip(chunks, embeddings):
+                chunk.embedding = emb.tolist()
+            return chunks
         return await self._gen.embed_chunks(chunks)
