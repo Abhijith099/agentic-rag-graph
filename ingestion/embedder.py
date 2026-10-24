@@ -423,6 +423,7 @@ class Embedder:
     def __init__(self):
         self._fastembed_model = None
         try:
+            # pyrefly: ignore[missing-import]
             from fastembed import TextEmbedding
             # nomic-ai/nomic-embed-text-v1.5 produces the exact 768-dim embeddings matching our database
             self._fastembed_model = TextEmbedding(model_name="nomic-ai/nomic-embed-text-v1.5")

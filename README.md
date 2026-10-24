@@ -1,15 +1,38 @@
 ﻿# Enterprise Corrective RAG with Dual-Layer Knowledge Graph
 
+[![Live Demo](https://img.shields.io/badge/Live_Demo-Render_Cloud-00e599?style=for-the-badge&logo=render&logoColor=white)](https://agentic-rag-graph.onrender.com)
+[![API Docs](https://img.shields.io/badge/Swagger_UI-Interactive_API-38bdf8?style=for-the-badge&logo=fastapi&logoColor=white)](https://agentic-rag-graph.onrender.com/docs)
+
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688.svg)](https://fastapi.tiangolo.com/)
 [![PostgreSQL](https://img.shields.io/badge/Neon-pgvector-00e599.svg)](https://neon.tech/)
 [![Neo4j](https://img.shields.io/badge/Neo4j-Graphiti-008cc1.svg)](https://neo4j.com/)
 [![Pydantic AI](https://img.shields.io/badge/Pydantic_AI-v2.58-E92063.svg)](https://ai.pydantic.dev/)
 [![Groq](https://img.shields.io/badge/Groq-LPU_Inference-f55036.svg)](https://groq.com/)
+[![Docker](https://img.shields.io/badge/Docker-Containerized-2496ED.svg)](https://www.docker.com/)
 
 A production-grade **Corrective Retrieval-Augmented Generation (CRAG)** system combining **Neon PostgreSQL (`pgvector`)** for dense semantic retrieval with **Neo4j Aura (Graphiti)** for temporal entity-relationship graph traversal.
 
-Featuring autonomous relevance grading, self-healing query rewriting, real-time Server-Sent Events (SSE) streaming, explainability audit traces, and an automated LLM-judged RAG Triad evaluation suite achieving **95.33% composite accuracy**.
+Featuring autonomous relevance grading, self-healing query rewriting, real-time Server-Sent Events (SSE) streaming, explainability audit traces, an interactive dark-themed web interface, and an automated LLM-judged RAG Triad evaluation suite achieving **95.33% composite accuracy**.
+
+---
+
+## Live Cloud Deployment
+
+The application is deployed live in production across multi-cloud infrastructure:
+
+- **Interactive Web App**: [https://agentic-rag-graph.onrender.com](https://agentic-rag-graph.onrender.com)
+- **Interactive Swagger API Docs**: [https://agentic-rag-graph.onrender.com/docs](https://agentic-rag-graph.onrender.com/docs)
+- **System Health Endpoint**: [https://agentic-rag-graph.onrender.com/health](https://agentic-rag-graph.onrender.com/health)
+
+### Cloud Infrastructure Breakdown
+
+| Component | Platform / Host | Technology / Specs | Role |
+| :--- | :--- | :--- | :--- |
+| **Web Service & API** | **Render Cloud** | Docker (Linux `python:3.12-slim`, non-root `appuser`) | Serves dark-mode chat UI, REST endpoints, and SSE streaming |
+| **Vector Database** | **Neon.tech Cloud** | Serverless PostgreSQL 16 + `pgvector` (HNSW indexing) | Dense 768-dimensional semantic embeddings & hybrid search |
+| **Knowledge Graph** | **Neo4j Aura Cloud** | Neo4j Enterprise (Instance `21d928a9`) + Graphiti | Temporal entity-relationship graph and multi-hop traversal |
+| **Inference Engine** | **Groq Cloud LPU** | `qwen/qwen3.8-27b` (Sub-second latency) | Relevance grading, self-healing query rewriting & final synthesis |
 
 ---
 
@@ -92,6 +115,7 @@ When out-of-scope or unverified prompts are submitted, the system attempts query
 
 ## Features
 
+- **Live Web Interface**: Built-in dark-themed web chat UI served directly by FastAPI at `/`.
 - **Dual-Layer Retrieval**: Combines 768-dimensional dense vector embeddings with multi-hop graph edges.
 - **Context Relevance Grader**: Evaluates each retrieved passage individually to eliminate noise before sending it to the synthesis model.
 - **Autonomous Query Rewriter**: When retrieval fails or yields low-quality context, the agent rewrites the prompt with keyword expansion and switches retrieval strategies.
@@ -135,12 +159,14 @@ OLLAMA_BASE_URL=http://localhost:11434
 EMBEDDING_MODEL=nomic-embed-text
 ```
 
-### 3. Run the FastAPI Server
+### 3. Run the FastAPI Server Locally
 
 ```powershell
 python -m agent.api
 ```
-Server boots at `http://localhost:8058`. Interactive Swagger docs available at `http://localhost:8058/docs`.
+Server boots at `http://localhost:8058`. 
+- Web Chat: `http://localhost:8058/`
+- Interactive Swagger docs: `http://localhost:8058/docs`
 
 ### 4. Launch the Interactive CLI
 
@@ -170,6 +196,8 @@ AGENTIC_RAG/
 │   ├── graph_utils.py    # Neo4j Aura Graphiti integration
 │   ├── rewriter.py       # Query rewriting & tool switching agent
 │   ├── schemas.py        # Pydantic data contracts (RetrievalTrace, GradeResult)
+│   ├── static/
+│   │   └── index.html    # Modern dark-mode web chat interface
 │   └── tools.py          # Vector search, graph search & hybrid search tools
 ├── big_tech_docs/        # Ingested enterprise documents (Markdown/SEC filings)
 ├── docs/images/          # Benchmark and CLI demonstration screenshots
@@ -182,5 +210,7 @@ AGENTIC_RAG/
 ├── sql/
 │   └── schema.sql        # Neon pgvector schema, HNSW indexes & hybrid search functions
 ├── cli.py                # Rich terminal chat interface with audit panels
-└── requirements.txt      # Project dependencies
+├── Dockerfile            # Production multi-stage Docker container
+├── .dockerignore         # Docker context security filters
+└── requirements.txt      # Production dependencies
 ```
