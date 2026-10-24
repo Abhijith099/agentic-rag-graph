@@ -11,3 +11,4 @@ neo4j>=5.26.0
 graphiti-core>=0.3.0
 python-dotenv>=1.0.1
 rich>=13.9.0
+nomic>=3.3.0

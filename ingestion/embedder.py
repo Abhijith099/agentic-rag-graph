@@ -419,7 +419,7 @@ if __name__ == "__main__":
 
 # Backwards compatibility alias for agent/tools.py
 class Embedder:
-    '''Cloud-Native Embedder: Uses official Nomic Inference API (0 MB RAM overhead),
+    '''Cloud-Native Embedder: Uses official Nomic client (0 MB RAM overhead),
     falling back to local Ollama when run locally.'''
     def __init__(self):
         self.nomic_key = os.getenv("NOMIC_API_KEY")
@@ -430,23 +430,18 @@ class Embedder:
     async def embed_text(self, text: str) -> List[float]:
         nomic_key = os.getenv("NOMIC_API_KEY")
         if nomic_key:
-            import httpx
-            api_url = "https://api-inference.nomic.ai/v1/embeddings"
-            headers = {"Authorization": f"Bearer {nomic_key}"}
-            payload = {
-                "model": "nomic-embed-text-v1.5",
-                "input": f"search_query: {text}"
-            }
             try:
-                async with httpx.AsyncClient(timeout=30.0) as client:
-                    resp = await client.post(api_url, headers=headers, json=payload)
-                    if resp.status_code == 200:
-                        data = resp.json()
-                        return data["data"][0]["embedding"]
-                    else:
-                        logger.error(f"Nomic embedding error ({resp.status_code}): {resp.text}")
+                import nomic
+                from nomic import embed
+                nomic.login(nomic_key)
+                res = embed.text(
+                    texts=[text],
+                    model="nomic-embed-text-v1.5",
+                    task_type="search_query"
+                )
+                return res["embeddings"][0]
             except Exception as e:
-                logger.error(f"Nomic embedding request failed: {e}")
+                logger.error(f"Nomic official embed failed: {e}")
 
         if self._gen is None:
             self._gen = create_embedder()
