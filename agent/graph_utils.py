@@ -35,9 +35,15 @@ class GraphitiClient:
         self.llm_choice = settings.llm_choice
 
         # Embedding setup for Graphiti node similarity
-        self.embedding_base_url = settings.embedding_base_url
-        self.embedding_api_key = settings.embedding_api_key or self.llm_api_key
-        self.embedding_model = settings.embedding_model
+        nomic_key = os.getenv("NOMIC_API_KEY")
+        if nomic_key:
+            self.embedding_base_url = "https://api-inference.nomic.ai/v1"
+            self.embedding_api_key = nomic_key
+            self.embedding_model = "nomic-embed-text-v1.5"
+        else:
+            self.embedding_base_url = settings.embedding_base_url
+            self.embedding_api_key = settings.embedding_api_key or self.llm_api_key
+            self.embedding_model = settings.embedding_model
         self.embedding_dimensions = settings.vector_dimension
 
         self.graphiti: Optional[Graphiti] = None
