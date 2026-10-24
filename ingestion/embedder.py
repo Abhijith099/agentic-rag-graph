@@ -419,30 +419,38 @@ if __name__ == "__main__":
 
 # Backwards compatibility alias for agent/tools.py
 class Embedder:
-    """Universal Embedder: uses in-container fastembed if available, otherwise falls back to API client."""
+    '''Cloud-Native Embedder: Uses HuggingFace Serverless Inference API (0 MB RAM overhead),
+    falling back to local Ollama/OpenAI client when run locally.'''
     def __init__(self):
-        self._fastembed_model = None
-        try:
-            # pyrefly: ignore[missing-import]
-            from fastembed import TextEmbedding
-            # nomic-ai/nomic-embed-text-v1.5 produces the exact 768-dim embeddings matching our database
-            self._fastembed_model = TextEmbedding(model_name="nomic-ai/nomic-embed-text-v1.5")
-            logger.info("Using in-container fastembed for 768-dim nomic-embed-text")
-        except Exception as e:
-            logger.warning(f"Fastembed unavailable ({e}), falling back to API client")
+        self.hf_token = os.getenv("HF_TOKEN")
+        self.hf_model = os.getenv("HF_EMBEDDING_MODEL", "nomic-ai/nomic-embed-text-v1.5")
+        self._gen = None
+        if not self.hf_token:
             self._gen = create_embedder()
-    
-    async def embed_text(self, text: str):
-        if self._fastembed_model:
-            embeddings = list(self._fastembed_model.embed([text]))
-            return embeddings[0].tolist()
+
+    async def embed_text(self, text: str) -> List[float]:
+        token = os.getenv("HF_TOKEN")
+        if token:
+            import httpx
+            api_url = f"https://api-inference.huggingface.co/pipeline/feature-extraction/{self.hf_model}"
+            headers = {"Authorization": f"Bearer {token}"}
+            payload = {"inputs": [f"search_query: {text}"], "options": {"wait_for_model": True}}
+            try:
+                async with httpx.AsyncClient(timeout=30.0) as client:
+                    resp = await client.post(api_url, headers=headers, json=payload)
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        return data[0] if isinstance(data[0], list) else data
+                    else:
+                        logger.error(f"HF embedding error ({resp.status_code}): {resp.text}")
+            except Exception as e:
+                logger.error(f"HF embedding request failed: {e}")
+
+        if self._gen is None:
+            self._gen = create_embedder()
         return await self._gen.embed_query(text)
-    
+
     async def embed_chunks(self, chunks, batch_size=50):
-        if self._fastembed_model:
-            texts = [c.content for c in chunks]
-            embeddings = list(self._fastembed_model.embed(texts))
-            for chunk, emb in zip(chunks, embeddings):
-                chunk.embedding = emb.tolist()
-            return chunks
+        if self._gen is None:
+            self._gen = create_embedder()
         return await self._gen.embed_chunks(chunks)

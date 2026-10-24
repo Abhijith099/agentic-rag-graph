@@ -1,4 +1,4 @@
-"""
+﻿"""
 Graph utilities for Neo4j and Graphiti integration.
 Manages Graphiti client, episode addition, and semantic graph search.
 """
