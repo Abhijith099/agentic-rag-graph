@@ -432,7 +432,7 @@ class Embedder:
         token = os.getenv("HF_TOKEN")
         if token:
             import httpx
-            api_url = f"https://api-inference.huggingface.co/pipeline/feature-extraction/{self.hf_model}"
+            api_url = f"https://router.huggingface.co/hf-inference/models/{self.hf_model}"
             headers = {"Authorization": f"Bearer {token}"}
             payload = {"inputs": [f"search_query: {text}"], "options": {"wait_for_model": True}}
             try:
