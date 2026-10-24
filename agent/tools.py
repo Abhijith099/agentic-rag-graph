@@ -101,6 +101,7 @@ async def hybrid_search(query: str, limit: int = 5, text_weight: float = 0.3) ->
     """
     try:
         query_vector = await _embedder.embed_text(query)
+        vector_str = str(query_vector)
         async with get_connection() as conn:
             records = await conn.fetch(
                 """
